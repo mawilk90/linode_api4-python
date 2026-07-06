@@ -97,8 +97,12 @@ def create_nb(test_linode_client, e2e_test_firewall):
     nb.delete()
 
 
-def test_create_nb(test_linode_client, e2e_test_firewall):
-    client = test_linode_client
+@pytest.mark.vcr_cassette
+@pytest.mark.smoke
+def test_create_nb(test_vcr_recorder, e2e_test_firewall):
+    client, recorder = test_vcr_recorder
+    # def test_create_nb(test_linode_client, e2e_test_firewall):
+    #     client = test_linode_client
     label = get_test_label(8)
 
     nb = client.nodebalancer_create(

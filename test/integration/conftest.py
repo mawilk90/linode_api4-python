@@ -4,6 +4,7 @@ import os
 import random
 import subprocess
 import time
+from pathlib import Path
 from test.integration.helpers import (
     get_test_label,
     send_request_when_resource_available,
@@ -14,6 +15,7 @@ from typing import Optional, Set
 
 import pytest
 import requests
+import vcr
 from requests.exceptions import ConnectionError, RequestException
 
 from linode_api4 import (
@@ -288,6 +290,35 @@ def test_linode_client():
         ca_path=api_ca_file,
     )
     return client
+
+
+@pytest.fixture
+def test_vcr_recorder(test_linode_client, request):
+    test_name = request.node.name
+    test_vcr_marker = request.node.get_closest_marker("vcr_cassette")
+
+    if test_vcr_marker:
+        cassette_name = (
+            test_vcr_marker.args[0]
+            if test_vcr_marker.args
+            else f"{test_name}.yaml"
+        )
+        cassettes_dir = os.path.join(Path(__file__).parent.parent, "cassettes")
+
+        vcr_recorder = vcr.VCR(
+            cassette_library_dir=cassettes_dir,
+            record_mode="once",
+        )
+        vcr_context = vcr_recorder.use_cassette(cassette_name)
+        vcr_context.__enter__()
+
+        yield test_linode_client, vcr_recorder
+
+        # exit to close VCR session and save cassette
+        vcr_context.__exit__(None, None, None)
+
+    else:
+        yield test_linode_client
 
 
 @pytest.fixture
