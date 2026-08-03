@@ -54,6 +54,8 @@ dev = [
     "build>=0.10.0",
     "twine>=4.0.2",
     "pytest-rerunfailures",
+    "vcrpy>=8.3.0",
+    "pytest-recording>=0.13.4",
 ]
 
 doc = [
@@ -95,5 +97,6 @@ testpaths = ["test"]
 python_files = ["*_test.py", "test_*.py"]
 markers = [
     "smoke: mark a test as a smoke test",
-    "flaky: mark a test as a flaky test for rerun"
+    "flaky: mark a test as a flaky test for rerun",
+    "vcr_cassette: mark a test to use a VCR cassette",
 ]
