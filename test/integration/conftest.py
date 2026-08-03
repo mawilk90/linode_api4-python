@@ -122,6 +122,12 @@ def get_region(
     return random.choice(get_regions(client, capabilities, site_type))
 
 
+def get_first_region(
+    client: LinodeClient, capabilities: Set[str] = None, site_type: str = "core"
+):
+    return list(get_regions(client, capabilities, site_type))[0]
+
+
 def get_api_ca_file():
     result = os.environ.get(ENV_API_CA_NAME, None)
     return result if result != "" else None

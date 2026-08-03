@@ -2,7 +2,7 @@ import re
 from test.integration.conftest import (
     get_api_ca_file,
     get_api_url,
-    get_region,
+    get_first_region,
     get_token,
 )
 from test.integration.helpers import get_test_label
@@ -18,7 +18,7 @@ from linode_api4.objects import (
     ReservedIPAddress,
 )
 
-TEST_REGION = get_region(
+TEST_REGION = get_first_region(
     LinodeClient(
         token=get_token(),
         base_url=get_api_url(),
@@ -27,6 +27,8 @@ TEST_REGION = get_region(
     {"Linodes", "Cloud Firewall", "NodeBalancers"},
     site_type="core",
 )
+
+TEST_LABEL = "py-test-nb-"
 
 
 @pytest.fixture(scope="session")
@@ -97,13 +99,12 @@ def create_nb(test_linode_client, e2e_test_firewall):
     nb.delete()
 
 
-@pytest.mark.vcr_cassette
+# @pytest.mark.vcr_cassette
+@pytest.mark.vcr_cassette("test_create_nb_12345.yaml")
 @pytest.mark.smoke
 def test_create_nb(test_vcr_recorder, e2e_test_firewall):
     client, recorder = test_vcr_recorder
-    # def test_create_nb(test_linode_client, e2e_test_firewall):
-    #     client = test_linode_client
-    label = get_test_label(8)
+    label = TEST_LABEL + get_test_label(8)
 
     nb = client.nodebalancer_create(
         region=TEST_REGION,
@@ -112,8 +113,10 @@ def test_create_nb(test_vcr_recorder, e2e_test_firewall):
         client_udp_sess_throttle=5,
     )
 
-    assert TEST_REGION, nb.region
-    assert label == nb.label
+    assert TEST_REGION.id == nb.region.id
+    assert (
+        TEST_LABEL in nb.label
+    ), "Returned nodebalancer does not match nodebalancer create request"
     assert 5 == nb.client_udp_sess_throttle
 
     nb.delete()
