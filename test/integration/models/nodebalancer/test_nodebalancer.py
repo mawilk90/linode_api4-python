@@ -103,7 +103,7 @@ def create_nb(test_linode_client, e2e_test_firewall):
 @pytest.mark.vcr_cassette("test_create_nb_12345.yaml")
 @pytest.mark.smoke
 def test_create_nb(test_vcr_recorder, e2e_test_firewall):
-    client, recorder = test_vcr_recorder
+    client = test_vcr_recorder
     label = TEST_LABEL + get_test_label(8)
 
     nb = client.nodebalancer_create(
@@ -218,11 +218,13 @@ def test_update_nb(test_linode_client, create_nb):
     assert 5 == nb_updated.client_udp_sess_throttle
 
 
+@pytest.mark.vcr_cassette("test_create_nb_node.yaml")
 @pytest.mark.smoke
 def test_create_nb_node(
-    test_linode_client, create_nb_config, linode_with_private_ip
+    test_vcr_recorder, create_nb_config, linode_with_private_ip
 ):
-    config = test_linode_client.load(
+    client = test_vcr_recorder
+    config = client.load(
         NodeBalancerConfig,
         create_nb_config.id,
         create_nb_config.nodebalancer_id,
