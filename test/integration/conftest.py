@@ -336,36 +336,6 @@ def ssh_key_gen(tmp_path_factory):
 
 
 @pytest.fixture
-def test_vcr_recorder(test_linode_client, request):
-    test_name = request.node.name
-    test_vcr_marker = request.node.get_closest_marker("vcr_cassette")
-    record_mode = request.config.getoption("--record-mode", default="once")
-
-    if test_vcr_marker:
-        cassette_name = (
-            test_vcr_marker.args[0]
-            if test_vcr_marker.args
-            else f"{test_name}.yaml"
-        )
-        cassettes_dir = os.path.join(Path(__file__).parent.parent, "cassettes")
-
-        vcr_recorder = vcr.VCR(
-            cassette_library_dir=cassettes_dir,
-            record_mode=record_mode,
-        )
-        vcr_context = vcr_recorder.use_cassette(cassette_name)
-        vcr_context.__enter__()
-
-        yield test_linode_client
-
-        # exit to close VCR session and save cassette
-        vcr_context.__exit__(None, None, None)
-
-    else:
-        yield test_linode_client
-
-
-@pytest.fixture
 def test_account_settings(test_linode_client):
     client = test_linode_client
     account_settings = client.account.settings()

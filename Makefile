@@ -64,7 +64,6 @@ TEST_COMMAND = $(if $(TEST_SUITE),$(if $(filter $(TEST_SUITE),linode_client logi
 
 .PHONY: test-int
 test-int:
-# 	$(PYTHON) -m pytest test/integration/${TEST_COMMAND} $(if $(TEST_CASE),-k $(TEST_CASE)) ${TEST_ARGS}
 #   record-mode=none -> This is used to run the tests without recording new cassettes. It will use the existing cassettes for the tests.
 	$(PYTHON) -m pytest test/integration/${TEST_COMMAND} $(if $(TEST_CASE),-k $(TEST_CASE)) ${TEST_ARGS} --record-mode=none
 
@@ -74,7 +73,6 @@ test-unit:
 
 .PHONY: test-smoke
 test-smoke:
-# 	$(PYTHON) -m pytest -m smoke test/integration
 #   record-mode=all -> This is used to run the tests and record new cassettes. It will overwrite the existing cassettes for the tests.
 	$(PYTHON) -m pytest -m smoke test/integration --record-mode=all
 
