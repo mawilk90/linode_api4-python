@@ -137,7 +137,57 @@ def run_long_tests():
     return os.environ.get(RUN_LONG_TESTS, None)
 
 
-@pytest.fixture(autouse=True, scope="session")
+@pytest.fixture(scope="session")
+def test_linode_client():
+    token = get_token()
+    api_url = get_api_url()
+    api_ca_file = get_api_ca_file()
+    client = LinodeClient(
+        token,
+        base_url=api_url,
+        ca_path=api_ca_file,
+    )
+    return client
+
+
+@pytest.fixture(autouse=True)
+def _set_vcr_recorder(request):
+    test_name = request.node.name
+    test_vcr_marker = request.node.get_closest_marker("vcr_cassette")
+    record_mode = request.config.getoption("--record-mode")
+
+    if test_vcr_marker and record_mode:
+        cassette_name = (
+            test_vcr_marker.args[0]
+            if test_vcr_marker.args
+            else f"{test_name}.yaml"
+        )
+        cassettes_dir = os.path.join(Path(__file__).parent.parent, "cassettes")
+        cassette_path = Path(os.path.join(cassettes_dir, cassette_name))
+
+        if record_mode == "none" and not cassette_path.exists():
+            pytest.skip(
+                f"The test has no cassette so it is skipped for --record-mode='none'"
+            )
+
+        vcr_recorder = vcr.VCR(
+            cassette_library_dir=cassettes_dir,
+            record_mode=record_mode,
+        )
+        vcr_context = vcr_recorder.use_cassette(cassette_name)
+        vcr_context.__enter__()
+
+        yield None
+
+        # exit to close VCR session and save cassette
+        vcr_context.__exit__(None, None, None)
+
+    else:
+        yield None
+        return
+
+
+@pytest.fixture(autouse=True, scope="function")
 def e2e_test_firewall(test_linode_client):
     # Allow skipping firewall creation for local runs: set SKIP_E2E_FIREWALL=1
     if os.environ.get(SKIP_E2E_FIREWALL):
@@ -283,19 +333,6 @@ def ssh_key_gen(tmp_path_factory):
     priv_key = key_path.read_text().rstrip()
 
     yield pub_key, priv_key
-
-
-@pytest.fixture(scope="session")
-def test_linode_client():
-    token = get_token()
-    api_url = get_api_url()
-    api_ca_file = get_api_ca_file()
-    client = LinodeClient(
-        token,
-        base_url=api_url,
-        ca_path=api_ca_file,
-    )
-    return client
 
 
 @pytest.fixture

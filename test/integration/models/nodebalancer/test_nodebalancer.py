@@ -31,7 +31,7 @@ TEST_REGION = get_first_region(
 TEST_LABEL = "py-test-nb-"
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def linode_with_private_ip(test_linode_client, e2e_test_firewall):
     client = test_linode_client
     label = get_test_label(8)
@@ -51,7 +51,7 @@ def linode_with_private_ip(test_linode_client, e2e_test_firewall):
     linode_instance.delete()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def create_nb_config(test_linode_client, e2e_test_firewall):
     client = test_linode_client
     label = get_test_label(8)
@@ -99,11 +99,10 @@ def create_nb(test_linode_client, e2e_test_firewall):
     nb.delete()
 
 
-# @pytest.mark.vcr_cassette
-@pytest.mark.vcr_cassette("test_create_nb_12345.yaml")
+@pytest.mark.vcr_cassette
 @pytest.mark.smoke
-def test_create_nb(test_vcr_recorder, e2e_test_firewall):
-    client = test_vcr_recorder
+def test_create_nb(test_linode_client, e2e_test_firewall):
+    client = test_linode_client
     label = TEST_LABEL + get_test_label(8)
 
     nb = client.nodebalancer_create(
@@ -218,24 +217,24 @@ def test_update_nb(test_linode_client, create_nb):
     assert 5 == nb_updated.client_udp_sess_throttle
 
 
-@pytest.mark.vcr_cassette("test_create_nb_node.yaml")
+@pytest.mark.vcr_cassette("test_create_nb_node_123.yaml")
 @pytest.mark.smoke
 def test_create_nb_node(
-    test_vcr_recorder, create_nb_config, linode_with_private_ip
+    test_linode_client, create_nb_config, linode_with_private_ip
 ):
-    client = test_vcr_recorder
+    client = test_linode_client
     config = client.load(
         NodeBalancerConfig,
         create_nb_config.id,
         create_nb_config.nodebalancer_id,
     )
     linode = linode_with_private_ip
-    address = [a for a in linode.ipv4 if re.search("192.168.+", a)][0]
+    address = [a for a in linode.ipv4 if re.search("192.+", a)][0]
     node = config.node_create(
         "node_test", address + ":80", weight=50, mode="accept"
     )
 
-    assert re.search("192.168.+:[0-9]+", node.address)
+    assert re.search("192.+:[0-9]+", node.address)
     assert "node_test" == node.label
 
 
