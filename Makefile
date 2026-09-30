@@ -64,8 +64,9 @@ TEST_COMMAND = $(if $(TEST_SUITE),$(if $(filter $(TEST_SUITE),linode_client logi
 
 .PHONY: test-int
 test-int:
-#   record-mode=none -> This is used to run the tests without recording new cassettes. It will use the existing cassettes for the tests.
-	$(PYTHON) -m pytest test/integration/${TEST_COMMAND} $(if $(TEST_CASE),-k $(TEST_CASE)) ${TEST_ARGS} --record-mode=none
+#   record-mode=none -> This is used to run the tests with existing cassettes
+	@echo "Running int tests in REPLAY mode..."
+	$(PYTHON) -m pytest test/integration/${TEST_COMMAND} $(if $(TEST_CASE),-k $(TEST_CASE)) ${TEST_ARGS} -s -v --record-mode=none
 
 .PHONY: test-unit
 test-unit:
@@ -73,13 +74,15 @@ test-unit:
 
 .PHONY: test-smoke
 test-smoke:
-#   record-mode=all -> This is used to run the tests and record new cassettes. It will overwrite the existing cassettes for the tests.
-	$(PYTHON) -m pytest -m smoke test/integration --record-mode=all
+#   record-mode=all -> This is used to run the tests and record new cassettes
+	@echo "Running smoke tests in RECORD mode..."
+	$(PYTHON) -m pytest -m smoke test/integration/${TEST_COMMAND} $(if $(TEST_CASE),-k $(TEST_CASE)) ${TEST_ARGS} -s -v --record-mode=all
+# 	$(MAKE) sanitize
 
 run_cassettes:
-#   record-mode=all -> This is used to run the tests and record new cassettes. It will overwrite the existing cassettes for the tests.
-	@echo "Running cassettes..."
-	$(PYTHON) -m pytest test/integration/${TEST_COMMAND} $(if $(TEST_CASE),-k $(TEST_CASE)) ${TEST_ARGS} --record-mode=all
+#   record-mode=all -> This is used to run the tests and record new cassettes
+	@echo "Running int tests in RECORD mode..."
+	$(PYTHON) -m pytest test/integration/${TEST_COMMAND} $(if $(TEST_CASE),-k $(TEST_CASE)) ${TEST_ARGS} -s -v --record-mode=all
 
 sanitize:
 	@echo "Sanitizing cassettes..."
@@ -90,6 +93,8 @@ sanitize:
 			-e 's/((25[0-5]|(2[0-4]|1[0-9]|[1-9])[0-9])\.){3}(25[0-5]|(2[0-4]|1[0-9]|[1-9])[0-9])/192.0.2.0/g' \
 			-e 's/"root_pass":"[^"]*"/"root_pass":"thisIsYourRootPassword"/g' \
 			-e 's/"hostname": *"[^"]*"/"hostname":"thisIsYourHostName"/g' \
+			-e 's/Bearer [-A-Za-z0-9.~+/=]+/Bearer thisIsYourToken/g' \
+			-e 's/([0-9A-Z]{1,8}-[0-9A-Z]{1,4}-[0-9A-Z]{1,4}-[0-9A-Z]{1,16})/'thisIsYourCustomerUUID'/g' \
 			$$yaml; \
 	done
 	@find $(CASSETTE_DIR) -name *yaml.bak -exec rm {} \;

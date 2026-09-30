@@ -167,7 +167,7 @@ def _set_vcr_recorder(request):
 
         if record_mode == "none" and not cassette_path.exists():
             pytest.skip(
-                f"The test has no cassette so it is skipped for --record-mode='none'"
+                f"The test has no cassette recorded so it is skipped in replay mode"
             )
 
         vcr_recorder = vcr.VCR(
@@ -182,7 +182,15 @@ def _set_vcr_recorder(request):
         # exit to close VCR session and save cassette
         vcr_context.__exit__(None, None, None)
 
+    elif record_mode == "none":
+        pytest.skip(
+            "The test has no 'vcr_cassette' marker so it is skipped in replay mode"
+        )
+
     else:
+        print(
+            "(The test has no 'vcr_cassette' marker so there will be no cassette recorded)"
+        )
         yield None
         return
 

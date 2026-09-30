@@ -121,6 +121,7 @@ def test_create_nb(test_linode_client, e2e_test_firewall):
     nb.delete()
 
 
+# @pytest.mark.vcr_cassette
 def test_create_nb_with_reserved_ip(
     test_linode_client, e2e_test_firewall, create_reserved_ip
 ):
