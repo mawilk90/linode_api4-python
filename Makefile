@@ -93,8 +93,6 @@ sanitize:
 			-e 's/((25[0-5]|(2[0-4]|1[0-9]|[1-9])[0-9])\.){3}(25[0-5]|(2[0-4]|1[0-9]|[1-9])[0-9])/192.0.2.0/g' \
 			-e 's/"root_pass":"[^"]*"/"root_pass":"thisIsYourRootPassword"/g' \
 			-e 's/"hostname": *"[^"]*"/"hostname":"thisIsYourHostName"/g' \
-			-e 's/Bearer [-A-Za-z0-9.~+/=]+/Bearer thisIsYourToken/g' \
-			-e 's/([0-9A-Z]{1,8}-[0-9A-Z]{1,4}-[0-9A-Z]{1,4}-[0-9A-Z]{1,16})/'thisIsYourCustomerUUID'/g' \
 			$$yaml; \
 	done
 	@find $(CASSETTE_DIR) -name *yaml.bak -exec rm {} \;

@@ -150,6 +150,25 @@ def test_linode_client():
     return client
 
 
+def remove_response_headers(response):
+    headers_to_remove = {
+        "x-customer-uuid",
+        "cf-ray",
+        "x-ratelimit-limit",
+        "x-ratelimit-remaining",
+        "x-ratelimit-reset",
+        "date",
+        "expires",
+    }
+
+    response["headers"] = {
+        k: v
+        for k, v in response["headers"].items()
+        if k.lower() not in headers_to_remove
+    }
+    return response
+
+
 @pytest.fixture(autouse=True)
 def _set_vcr_recorder(request):
     test_name = request.node.name
@@ -173,6 +192,10 @@ def _set_vcr_recorder(request):
         vcr_recorder = vcr.VCR(
             cassette_library_dir=cassettes_dir,
             record_mode=record_mode,
+            filter_headers=[
+                "authorization",
+            ],
+            before_record_response=remove_response_headers,
         )
         vcr_context = vcr_recorder.use_cassette(cassette_name)
         vcr_context.__enter__()
